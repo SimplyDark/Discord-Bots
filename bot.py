@@ -38,7 +38,7 @@ async def version():
 @bot.command(pass_context=True, brief="Announces phrases, please wrap in quotes")
 async def announce(ctx):
     command = cmd_prefix + str(ctx.command) + " "
-    msg = ctx.message.content.replace(command, '')
+    msg = ctx.message.content.replace(command, '', 1)
     if msg == "pug":
         await bot.say("@everyone PUG about to start. Type \"!join pug\" to join")
     else:
