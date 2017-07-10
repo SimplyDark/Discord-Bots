@@ -1,6 +1,6 @@
 import logging
 import datetime
-
+import os
 
 class PugLogger:
     def __init__(self):
@@ -10,8 +10,11 @@ class PugLogger:
         current_time = datetime.datetime.now()
         date = datetime.datetime.strftime(current_time, "%m-%d-%y")
         time = datetime.datetime.strftime(current_time, "%I:%M:%S %p")
-
-        handler = logging.FileHandler("Logs/[PUG Bot] " + date + ".log")
+        try:
+            handler = logging.FileHandler("Logs/[PUG Bot] " + date + ".log")
+        except FileNotFoundError:
+            os.makedirs("Logs")
+            handler = logging.FileHandler("Logs/[PUG Bot] " + date + ".log")
         handler.setLevel(logging.INFO)
 
         formatter = logging.Formatter(fmt="{} [%(levelname)s] %(name)s %(message)s".format(time))

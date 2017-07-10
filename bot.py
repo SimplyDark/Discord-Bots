@@ -8,6 +8,7 @@ from player import Player
 from game import Game
 from server_switcher import ServerSwitcher
 from pug_logger import PugLogger
+from updater import update
 
 logger = PugLogger()
 
@@ -31,7 +32,7 @@ async def on_ready():
 # Commands
 @bot.command(brief="Displays version")
 async def version():
-    await bot.say("Pre-alpha 2")
+    await bot.say("Pre-alpha 2.5")
 
 
 @bot.command(pass_context=True, brief="Announces phrases, please wrap in quotes")
@@ -245,6 +246,7 @@ async def list_games(ctx):
     else:
         await bot.edit_message(games_list, "Games in progress: \n" + ''.join(game_list))
 
+
 @bot.command(pass_context=True, hidden=True)
 async def fanfare(link):
     args = str(link.message.content).split()
@@ -290,8 +292,17 @@ async def restart_bot(ctx):
 async def who():
     await bot.say("I am " + bot.user.name)
 
+
+@bot.command(pass_context=True, hidden=True)
+async def update_bot(ctx):
+    user = ctx.message.author
+    if user.id == master:
+        update()
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+
 # Bot token (¿Bot?)
-#bot.run("MzMwNDY0MDM4MTA0NDY1NDA4.DDhcUQ.g7XglufF0DJCow_nm0MoKyUW53Q")
+# bot.run("MzMwNDY0MDM4MTA0NDY1NDA4.DDhcUQ.g7XglufF0DJCow_nm0MoKyUW53Q")
 
 # Bot token (¿Simple?)
 bot.run("MzMzMjczMzgxOTI1NTUyMTI4.DEKQkA.WqC_45xC_g8y3Gicd8jI5gsjl_M")
