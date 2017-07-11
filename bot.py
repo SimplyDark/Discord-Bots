@@ -33,7 +33,7 @@ async def on_ready():
 # Commands
 @bot.command(brief="Displays version")
 async def version():
-    await bot.say("Pre-alpha 2.5")
+    await bot.say("Pre-alpha 2.6")
 
 
 @bot.command(pass_context=True, brief="Announces phrases, please wrap in quotes")
@@ -110,16 +110,17 @@ async def join(ctx):
 @bot.command(pass_context=True, brief="Readies up player")
 async def ready(ctx):
     user = ctx.message.author
-    player = Player(user, bot)
-    game_name = player.get_game(games)
+    p = Player(user, bot)
+    game_name = p.get_game(games)
     game = games[game_name]
     try:
         ready_num = 0
-        player.set_ready()
-        player.update(game)
+        player = game.get_player(user.id)
+        player.update(game, "ready", "Ready")
         for member in games[game_name].players:
             if "Ready" == member.ready:
                 ready_num += 1
+                await bot.send_message(user, "You have been readied up in game \"{}\"".format(game_name))
         if int(ready_num) == int(game.ready_players):
             game.set_game_state(1)
             seconds = 5
@@ -130,7 +131,7 @@ async def ready(ctx):
                 seconds -= 1
                 await bot.edit_message(message, start_message.format(seconds))
             await bot.delete_message(message)
-            game.scramble_players()
+            game.sr_scramble_players()
             game.create_teams()
             for member in game.players:
                 team_member = server.get_member(member.id)
@@ -292,6 +293,23 @@ async def sr(ctx):
     battletag = ctx.message.content.split(" ")[1]
     rank = await get_player_stats(battletag)
     await bot.send_message(ctx.message.channel, "Your SR is {}".format(rank))
+
+
+@bot.command(pass_context=True)
+async def set_sr(ctx):
+    user = ctx.message.author
+    user_player = Player(user, bot)
+    args = ctx.message.content.split(" ")
+    battletag = args[1]
+    try:
+        game_name = user_player.get_game(games)
+        game = games[game_name]
+        rank = await get_player_stats(battletag)
+        player = game.get_player(user.id)
+        player.update(game, "sr", int(rank))
+        await bot.send_message(ctx.message.channel, "{}'s SR was set to {} from {}".format(user.name, player.sr, battletag))
+    except Exception:
+       await bot.send_message(ctx.message.channel, "Sorry, your SR could not be set for the current game")
 
 
 # Do not run in IDE if you want to test this

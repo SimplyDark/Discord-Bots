@@ -20,7 +20,7 @@ class Player:
         self.in_channel = "In channel"
 
     def set_sr(self, num):
-        self.sr = num
+        self.sr = int(num)
 
     def get_ready(self):
         return self.ready
@@ -42,8 +42,9 @@ class Player:
     def set_team(self, team):
         self.team = team if team in (1, 2) else print(str(team) + " is not a valid team")
 
-    def update(self, game):
-        game.remove_player(self)
-        game.add_player(self)
+    def update(self, game, attr, value):
+        if self in game.players:
+            player = game.get_player(self.id)
+            setattr(player, attr, value)
 
 

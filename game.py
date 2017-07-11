@@ -66,6 +66,26 @@ class Game:
             else:
                 print("Something went horribly wrong")
 
+    def sr_scramble_players(self):
+        team_1_sr = 0
+        team_2_sr = 0
+        sr = {}
+        for player in self.players:
+            sr[player.sr] = player
+        sorted_sr = sorted(sr)
+        half = int(len(sorted_sr) / 2)
+        high_sr = reversed(sorted_sr[half:])
+        low_sr = sorted_sr[:half]
+        for player in range(int(len(self.players) / 2)):
+            if (player % 2) == 0:
+                sr[high_sr[player]].set_team(1)
+                sr[low_sr[player]].set_team(1)
+                team_1_sr += high_sr[player] + low_sr[player]
+            else:
+                sr[high_sr[player]].set_team(2)
+                sr[low_sr[player]].set_team(2)
+                team_2_sr += high_sr[player] + low_sr[player]
+
     def create_teams(self):
         for player in self.players:
             if player.team == 1:
