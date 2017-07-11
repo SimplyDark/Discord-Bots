@@ -11,12 +11,16 @@ class Player:
         self.team_channel = None
         self.team = -1
         self.bot = bot
+        self.sr = 0
 
     def set_ready(self):
         self.ready = "Ready"
 
     def set_in_channel(self):
         self.in_channel = "In channel"
+
+    def set_sr(self, num):
+        self.sr = num
 
     def get_ready(self):
         return self.ready

@@ -9,6 +9,7 @@ from game import Game
 from server_switcher import ServerSwitcher
 from pug_logger import PugLogger
 from updater import update
+from owstats import get_player_stats
 
 logger = PugLogger()
 
@@ -46,7 +47,7 @@ async def announce(ctx):
         logger.log.info(ctx.message.author.name + " announced \"" + msg + "\"")
 
 
-@bot.command(pass_context=True, brief="Sets the amount of players in a game")
+@bot.command(pass_context=True, brief="Sets the amount of players in a game", hidden=True)
 async def set_players(ctx):
     args = str(ctx.message.content).split()
     try:
@@ -56,6 +57,7 @@ async def set_players(ctx):
         if game_name == str(game.name):
             game.ready_players = int(players)
             game.team_size = int(game.ready_players / 2)
+            await bot.send_message(ctx.message.author, "Amount of players set in game \"{}\" to {}".format(game_name, players))
     except IndexError:
         await bot.send_message(ctx.message.author, "Incorrect amount of arguments")
 
@@ -98,6 +100,7 @@ async def join(ctx):
             await bot.move_member(user, lobby)
             if user not in lobby.voice_members:
                 lobby.voice_members.append(user)
+            await bot.send_message(user, "You have joined game \"{}\"".format(game_name))
         else:
             await bot.send_message(user, "Sorry, PUG is full")
     except KeyError:
@@ -158,6 +161,7 @@ async def transfer(player):
     else:
         logger.log.info(user.name + " tried to transfer leadership while not leader")
 
+
 @bot.command(pass_context=True, brief="Leave a game")
 async def leave(ctx):
     user = ctx.message.author
@@ -216,6 +220,7 @@ async def restart(ctx):
             player.update(game)
             await bot.move_member(server.get_member(player.id), lobby)
         logger.log.info(user.name + " restarted game \"{}\"".format(game_name))
+        await bot.send_message(ctx.message.channel, "The game \"{}\" was restarted".format(game_name))
     else:
         logger.log.info("Unauthorized user {} tried to restart game \"{}\"".format(user.name, game_name))
 
@@ -279,6 +284,13 @@ async def debug(ctx):
     print(sys.executable)
 
 
+@bot.command(pass_context=True)
+async def sr(ctx):
+    battletag = ctx.message.content.split(" ")[1]
+    rank = await get_player_stats(battletag)
+    await bot.send_message(ctx.message.channel, "Your SR is {}".format(rank))
+
+
 # Do not run in IDE if you want to test this
 @bot.command(pass_context=True, hidden=True)
 async def restart_bot(ctx):
@@ -297,6 +309,7 @@ async def who():
 async def update_bot(ctx):
     user = ctx.message.author
     if user.id == master:
+        await bot.say("Updating...")
         update()
         os.execv(sys.executable, [sys.executable] + sys.argv)
 

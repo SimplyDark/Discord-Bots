@@ -75,6 +75,14 @@ class Game:
                 player.channel = self.channels[2]
                 player.set_in_channel()
 
+    def average_sr(self):
+        num_players = 0
+        total_sr = 0
+        for player in self.players:
+            num_players += 1
+            total_sr += player.sr
+        return total_sr / num_players
+
     @staticmethod
     async def move_players_back(game, bot, server, return_channel):
         for player in game.players:

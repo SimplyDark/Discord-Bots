@@ -28,8 +28,11 @@ def update():
     print("Copying update...")
     copy.communicate()
     # Clean up
-    del_files(tmp)
-    del_files(path + "/Discord-Bots")
+    try:
+        del_files(tmp)
+        del_files(path + "/Discord-Bots")
+    except Exception:
+        pass
 
 
 def del_files(name):
