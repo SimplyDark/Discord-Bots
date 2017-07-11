@@ -170,8 +170,11 @@ async def leave(ctx):
     game = games[game_name]
     player = game.get_player(user.id)
     if player.get_channel() in game.channels and game:
-        game.remove_player(player)
-        await bot.send_message(user, "You have been removed from the game: \"" + game.name + "\"")
+        if user is not game.leader:
+            game.remove_player(player)
+            await bot.send_message(user, "You have been removed from the game: \"\{}\"".format(game_name))
+        else:
+            await bot.send_message(user, "You cannot be removed from game \"{}\" because you are the leader".format(game_name))
 
 
 @bot.command(pass_context=True, hidden=True)
