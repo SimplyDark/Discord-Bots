@@ -14,11 +14,14 @@ class Game:
         self.channels = channels
         self.leader = None
         self.ready_players = 12
+        self.ready_num = 0
         self.team_size = int(self.ready_players / 2)
         self.game_state = GameState(0).name
         self.lobby = self.channels[0]
         self.team_1_channel = self.channels[1]
         self.team_2_channel = self.channels[2]
+        self.team_1_sr = 0
+        self.team_2_sr = 0
 
     def get_game_state(self):
         return self.game_state
@@ -67,24 +70,26 @@ class Game:
                 print("Something went horribly wrong")
 
     def sr_scramble_players(self):
-        team_1_sr = 0
-        team_2_sr = 0
-        sr = {}
-        for player in self.players:
-            sr[player.sr] = player
-        sorted_sr = sorted(sr)
+        team_1_sr = []
+        team_2_sr = []
+        sr = [self.players]
+        sorted_sr = sorted(sr, key=lambda player: player.sr)
         half = int(len(sorted_sr) / 2)
-        high_sr = reversed(sorted_sr[half:])
+        high_sr = [rank for rank in reversed(sorted_sr[half:])]
         low_sr = sorted_sr[:half]
-        for player in range(int(len(self.players) / 2)):
+        for player in range(half):
             if (player % 2) == 0:
-                sr[high_sr[player]].set_team(1)
-                sr[low_sr[player]].set_team(1)
-                team_1_sr += high_sr[player] + low_sr[player]
+                high_sr[player].set_team(1)
+                low_sr[player].set_team(1)
+                team_1_sr.append(high_sr[player].sr)
+                team_1_sr.append(low_sr[player].sr)
             else:
-                sr[high_sr[player]].set_team(2)
-                sr[low_sr[player]].set_team(2)
-                team_2_sr += high_sr[player] + low_sr[player]
+                high_sr[player].set_team(2)
+                low_sr[player].set_team(2)
+                team_2_sr.append(high_sr[player].sr)
+                team_2_sr.append(low_sr[player].sr)
+        self.team_1_sr = round(sum(team_1_sr) / len(team_1_sr))
+        self.team_2_sr = round(sum(team_2_sr) / len(team_2_sr))
 
     def create_teams(self):
         for player in self.players:
@@ -94,14 +99,6 @@ class Game:
             else:
                 player.channel = self.channels[2]
                 player.set_in_channel()
-
-    def average_sr(self):
-        num_players = 0
-        total_sr = 0
-        for player in self.players:
-            num_players += 1
-            total_sr += player.sr
-        return total_sr / num_players
 
     @staticmethod
     async def move_players_back(game, bot, server, return_channel):

@@ -40,11 +40,8 @@ async def version():
 async def announce(ctx):
     command = cmd_prefix + str(ctx.command) + " "
     msg = ctx.message.content.replace(command, '', 1)
-    if msg == "pug":
-        await bot.say("@everyone PUG about to start. Type \"!join pug\" to join")
-    else:
-        await bot.say(msg)
-        logger.log.info(ctx.message.author.name + " announced \"" + msg + "\"")
+    await bot.say(msg)
+    logger.log.info(ctx.message.author.name + " announced \"" + msg + "\"")
 
 
 @bot.command(pass_context=True, brief="Sets the amount of players in a game", hidden=True)
@@ -114,14 +111,16 @@ async def ready(ctx):
     game_name = p.get_game(games)
     game = games[game_name]
     try:
-        ready_num = 0
         player = game.get_player(user.id)
         player.update(game, "ready", "Ready")
-        for member in games[game_name].players:
-            if "Ready" == member.ready:
-                ready_num += 1
-                await bot.send_message(user, "You have been readied up in game \"{}\"".format(game_name))
-        if int(ready_num) == int(game.ready_players):
+        ready_message = "{} players are ready in game \"{}\""
+        ready_msg = await bot.send_message(ctx.message.channel, ready_message.format(game.ready_num, game_name))
+        if "Ready" == player.ready:
+            setattr(game, "ready_num", game.ready_num + 1)
+            print(game.ready_num)
+            await bot.edit_message(ready_msg, ready_message.format(game.ready_num, game_name))
+            await bot.send_message(user, "You have been readied up in game \"{}\"".format(game_name))
+        if int(game.ready_num) == int(game.ready_players):
             game.set_game_state(1)
             seconds = 5
             start_message = "Everyone has readied up, lobby starting in {} seconds."
@@ -132,6 +131,8 @@ async def ready(ctx):
                 await bot.edit_message(message, start_message.format(seconds))
             await bot.delete_message(message)
             game.sr_scramble_players()
+            await bot.send_message(ctx.message.channel, "Average Team 1 SR: {}".format(game.team_1_sr))
+            await bot.send_message(ctx.message.channel, "Average Team 2 SR: {}".format(game.team_2_sr))
             game.create_teams()
             for member in game.players:
                 team_member = server.get_member(member.id)
