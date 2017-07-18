@@ -1,5 +1,7 @@
 PUG Bot
 test.py
+utils.py
 .idea/*
 Logs/*
 __pycache__/*
+ghostdriver.log

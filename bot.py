@@ -9,7 +9,7 @@ from game import Game
 from server_switcher import ServerSwitcher
 from pug_logger import PugLogger
 from updater import update
-from owstats import get_player_stats
+from owstats import OWstats
 
 logger = PugLogger()
 
@@ -117,7 +117,6 @@ async def ready(ctx):
         ready_msg = await bot.send_message(ctx.message.channel, ready_message.format(game.ready_num, game_name))
         if "Ready" == player.ready:
             setattr(game, "ready_num", game.ready_num + 1)
-            print(game.ready_num)
             await bot.edit_message(ready_msg, ready_message.format(game.ready_num, game_name))
             await bot.send_message(user, "You have been readied up in game \"{}\"".format(game_name))
         if int(game.ready_num) == int(game.ready_players):
@@ -283,17 +282,23 @@ async def fanfare(link):
 
 @bot.command(pass_context=True, hidden=True)
 async def debug(ctx):
-    print("Nothing for now")
-    print(__file__)
-    print(sys.argv)
-    print(sys.executable)
+    em = discord.Embed(title="Test", description="Testing stuff")
+    await bot.send_message(ctx.message.channel, embed=em)
 
 
-@bot.command(pass_context=True)
-async def sr(ctx):
+@bot.command(pass_context=True, hidden=True)
+async def stats(ctx):
     battletag = ctx.message.content.split(" ")[1]
-    rank = await get_player_stats(battletag)
-    await bot.send_message(ctx.message.channel, "Your SR is {}".format(rank))
+    try:
+        owstats = await OWstats().get_player_stats(battletag)
+        for region in owstats.regions:
+            stats = discord.Embed(color=discord.Color.orange(), title=region.name)
+            stats.set_author(name=owstats.tag, icon_url=owstats.avatar)
+            stats.add_field(name="Ranking", value=region.rank, inline=False)
+            stats.add_field(name="Tier", value=region.tier)
+            await bot.send_message(ctx.message.channel, embed=stats)
+    except Exception:
+        await bot.send_message(ctx.message.channel, "Sorry, your stats were not found... Is that a real battle tag?")
 
 
 @bot.command(pass_context=True)
@@ -305,7 +310,7 @@ async def set_sr(ctx):
     try:
         game_name = user_player.get_game(games)
         game = games[game_name]
-        rank = await get_player_stats(battletag)
+        rank = await OWstats().get_player_stats(battletag)
         player = game.get_player(user.id)
         player.update(game, "sr", int(rank))
         await bot.send_message(ctx.message.channel, "{}'s SR was set to {} from {}".format(user.name, player.sr, battletag))
