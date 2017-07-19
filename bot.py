@@ -3,6 +3,7 @@ import asyncio
 import os
 import sys
 from discord.ext.commands import Bot
+import discord.errors
 
 from player import Player
 from game import Game
@@ -289,16 +290,24 @@ async def debug(ctx):
 @bot.command(pass_context=True, hidden=True)
 async def stats(ctx):
     battletag = ctx.message.content.split(" ")[1]
+    msg = await bot.send_message(ctx.message.channel, "Getting player stats...")
     try:
         owstats = await OWstats().get_player_stats(battletag)
         for region in owstats.regions:
             stats = discord.Embed(color=discord.Color.orange(), title=region.name)
             stats.set_author(name=owstats.tag, icon_url=owstats.avatar)
             stats.add_field(name="Ranking", value=region.rank, inline=False)
-            stats.add_field(name="Tier", value=region.tier)
+            stats.add_field(name="Tier", value=region.tier, inline=False)
+            hero_names = "\n".join(region.most_played)
+            stats.add_field(name="Most Played Heroes", value=hero_names, inline=False)
+            stats.set_thumbnail(url=region.most_played_img[0])
+            try:
+                await bot.delete_message(msg)
+            except discord.errors.NotFound:
+                pass
             await bot.send_message(ctx.message.channel, embed=stats)
     except Exception:
-        await bot.send_message(ctx.message.channel, "Sorry, your stats were not found... Is that a real battle tag?")
+        await bot.edit_message(msg, "Sorry, your stats were not found... Is that a real battle tag?")
 
 
 @bot.command(pass_context=True)
