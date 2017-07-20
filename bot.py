@@ -11,7 +11,6 @@ from config import Config
 
 logger = PugLogger()
 config = Config("config/config.ini")
-
 cmd_prefix = "!"
 bot = Bot(command_prefix=cmd_prefix)
 server_id = config.server
@@ -251,7 +250,7 @@ async def debug(ctx):
     None
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, brief="Displays competitive Overwatch stats")
 async def stats(ctx):
     battletag = ctx.message.content.split(" ")[1]
     msg = await bot.send_message(ctx.message.channel, "Getting player stats...")
@@ -274,7 +273,7 @@ async def stats(ctx):
         await bot.edit_message(msg, "Sorry, your stats were not found... Is that a real battle tag?")
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, hidden=True)
 async def set_sr(ctx):
     user = ctx.message.author
     user_player = Player(user, bot)
