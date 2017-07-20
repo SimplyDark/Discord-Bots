@@ -1,5 +1,4 @@
 import aiohttp
-import asyncio
 from selenium import webdriver
 
 heroes = {
@@ -64,7 +63,7 @@ class OWstats:
             owapi_session = aiohttp.ClientSession(headers={'User-Agent': 'aiohttp client 0.17'})
             async with owapi_session.get("http://owapi.net/api/v3/u/{}-{}/stats".format(name[0], name[1])) as request:
                 stats = await request.json()
-                for region in stats.items():
+                async for region in stats.items():
                     if region[0] == "_request":
                         continue
                     elif not region[1]:
@@ -73,14 +72,13 @@ class OWstats:
                         player_region = Region()
                         player_region.name = region[0].upper()
                         player_stats = region[1]["stats"]["competitive"]
-                        game_stats = player_stats["game_stats"]
                         overall_stats = player_stats["overall_stats"]
                         player_region.rank = overall_stats["comprank"]
                         player_region.tier = overall_stats["tier"].title()
                         player_region.winrate = overall_stats["win_rate"]
                         self.avatar = overall_stats["avatar"]
                         self.regions.append(player_region)
-                        _get_role(battletag, player_region)
+                        await _get_role(battletag, player_region)
 
             owapi_session.close()
             return self
@@ -92,7 +90,7 @@ class OWstats:
             return "not found... Is that a real battle tag?"
 
 
-def _get_role(battletag, region):
+async def _get_role(battletag, region):
     name = battletag.split("#")
     site = "https://playoverwatch.com/en-us/career/pc/{}/{}-{}".format(region.name.lower(), name[0], name[1])
     playow_session = webdriver.PhantomJS()

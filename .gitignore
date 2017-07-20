@@ -4,4 +4,5 @@ utils.py
 .idea/*
 Logs/*
 __pycache__/*
+config/*
 ghostdriver.log

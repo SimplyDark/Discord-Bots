@@ -2,6 +2,7 @@ import logging
 import datetime
 import os
 
+
 class PugLogger:
     def __init__(self):
         self.log = logging.getLogger("[PUG Bot]")

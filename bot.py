@@ -1,26 +1,22 @@
 import discord
 import asyncio
-import os
-import sys
 from discord.ext.commands import Bot
 import discord.errors
 
 from player import Player
 from game import Game
-from server_switcher import ServerSwitcher
 from pug_logger import PugLogger
-from updater import update
 from owstats import OWstats
+from config import Config
 
 logger = PugLogger()
+config = Config("config/config.ini")
 
 cmd_prefix = "!"
 bot = Bot(command_prefix=cmd_prefix)
-server_switch = ServerSwitcher()
-server_id = server_switch.servers[0]
-default_channel = server_switch.default_channels[0]
-message_channel = server_switch.message_channels[0]
-master = "328965253314379778"
+server_id = config.server
+default_channel = config.default_channel
+message_channel = config.message_channel
 games = {}  # Contains Game objects
 authorized = "Pug Leader"
 
@@ -35,14 +31,6 @@ async def on_ready():
 @bot.command(brief="Displays version")
 async def version():
     await bot.say("Pre-alpha 2.6")
-
-
-@bot.command(pass_context=True, brief="Announces phrases, please wrap in quotes")
-async def announce(ctx):
-    command = cmd_prefix + str(ctx.command) + " "
-    msg = ctx.message.content.replace(command, '', 1)
-    await bot.say(msg)
-    logger.log.info(ctx.message.author.name + " announced \"" + msg + "\"")
 
 
 @bot.command(pass_context=True, brief="Sets the amount of players in a game", hidden=True)
@@ -130,9 +118,10 @@ async def ready(ctx):
                 seconds -= 1
                 await bot.edit_message(message, start_message.format(seconds))
             await bot.delete_message(message)
-            game.sr_scramble_players()
-            await bot.send_message(ctx.message.channel, "Average Team 1 SR: {}".format(game.team_1_sr))
-            await bot.send_message(ctx.message.channel, "Average Team 2 SR: {}".format(game.team_2_sr))
+            game.scramble_players()
+            # game.sr_scramble_players()
+            # await bot.send_message(ctx.message.channel, "Average Team 1 SR: {}".format(game.team_1_sr))
+            # await bot.send_message(ctx.message.channel, "Average Team 2 SR: {}".format(game.team_2_sr))
             game.create_teams()
             for member in game.players:
                 team_member = server.get_member(member.id)
@@ -258,36 +247,11 @@ async def list_games(ctx):
 
 
 @bot.command(pass_context=True, hidden=True)
-async def fanfare(link):
-    args = str(link.message.content).split()
-    user = link.message.author
-    player = Player(user, bot)
-    if user.id == master:
-        try:
-            if args[1].startswith("http") and bot not in player.get_channel().voice_members:
-                global voice, noise
-                voice = await bot.join_voice_channel(player.get_channel())
-                noise = await voice.create_ytdl_player(args[1])
-                noise.start()
-            elif args[1].startswith("http"):
-                noise = await voice.create_ytdl_player(args[1])
-                noise.start()
-            if args[1] == "stop" and noise:
-                noise.stop()
-                voice.disconnect()
-        except IndexError:
-            print("No args")
-    else:
-        logger.log.info("Someone.... {} tried to be you...".format(user.name))
-
-
-@bot.command(pass_context=True, hidden=True)
 async def debug(ctx):
-    em = discord.Embed(title="Test", description="Testing stuff")
-    await bot.send_message(ctx.message.channel, embed=em)
+    None
 
 
-@bot.command(pass_context=True, hidden=True)
+@bot.command(pass_context=True)
 async def stats(ctx):
     battletag = ctx.message.content.split(" ")[1]
     msg = await bot.send_message(ctx.message.channel, "Getting player stats...")
@@ -326,32 +290,4 @@ async def set_sr(ctx):
     except Exception:
        await bot.send_message(ctx.message.channel, "Sorry, your SR could not be set for the current game")
 
-
-# Do not run in IDE if you want to test this
-@bot.command(pass_context=True, hidden=True)
-async def restart_bot(ctx):
-    user = ctx.message.author
-    if user.id == master:
-        logger.log.info("Bot {} has been restarted".format(bot.user.name))
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-
-
-@bot.command(hidden=True)
-async def who():
-    await bot.say("I am " + bot.user.name)
-
-
-@bot.command(pass_context=True, hidden=True)
-async def update_bot(ctx):
-    user = ctx.message.author
-    if user.id == master:
-        await bot.say("Updating...")
-        update()
-        os.execv(sys.executable, [sys.executable] + sys.argv)
-
-
-# Bot token (¿Bot?)
-# bot.run("MzMwNDY0MDM4MTA0NDY1NDA4.DDhcUQ.g7XglufF0DJCow_nm0MoKyUW53Q")
-
-# Bot token (¿Simple?)
-bot.run("MzMzMjczMzgxOTI1NTUyMTI4.DEKQkA.WqC_45xC_g8y3Gicd8jI5gsjl_M")
+bot.run(config.token)
